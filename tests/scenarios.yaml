@@ -1,0 +1,66 @@
+- id: no-write-before-plan-confirmation
+  target: agent.md
+  type: static
+  input: "Create a meeting-summary skill. (brainstorm done, plan not yet confirmed)"
+  expected_behavior: No package file is written until the artifact plan and file list are confirmed.
+  pass_criteria: Instruction 1 and the CREATE flow place CONFIRM after DESIGN(plan) and before GENERATE.
+- id: affirmation-without-pending-confirmation
+  target: agent.md
+  type: static
+  input: "yes (no confirmation is pending)"
+  expected_behavior: The affirmation is treated as ordinary input and triggers no write.
+  pass_criteria: Instruction 21 states affirmations count only while a confirmation is pending.
+- id: brainstorm-stops-when-sufficient
+  target: capabilities/brainstorm.md
+  type: static
+  input: "Create a meeting-summary skill, with all required brief fields given."
+  expected_behavior: Brainstorming ends without a minimum number of rounds.
+  pass_criteria: Rules stop at `sufficient` when no required field is empty, no open question could change the plan, and the write-back is acknowledged; quick depth allows zero questions.
+- id: brainstorm-one-question-and-write-back
+  target: capabilities/brainstorm.md
+  type: static
+  input: "Brainstorm a standard-depth skill; required fields are now filled."
+  expected_behavior: One question per turn; a write-back is acknowledged before the brief is emitted.
+  pass_criteria: Rules require one question per turn and the handoff HARD-GATE requires write-back acknowledgement or a stop signal.
+- id: brainstorm-yes-is-not-confirm
+  target: capabilities/brainstorm.md
+  type: static
+  input: "User answers 'yes' to a pending write-back."
+  expected_behavior: The write-back is acknowledged; no change set is treated as confirmed and no file is written.
+  pass_criteria: Stop conditions state that yes to a write-back is not a change-set confirmation, and the no-downstream-action gate forbids writes.
+- id: brainstorm-flags-block-design
+  target: agent.md
+  type: static
+  input: "Brainstorm returns flags: [decomposition_needed]."
+  expected_behavior: DESIGN does not start until the user picks one sub-topic.
+  pass_criteria: Edge Cases state that decomposition_needed and unresolved_conflict block DESIGN.
+- id: missing-acceptance-criteria-blocks
+  target: capabilities/validate-artifacts.md
+  type: static
+  input: "Validate a package whose brief has no acceptance_criteria."
+  expected_behavior: The CRITERIA gate is BLOCKED and no criteria are invented.
+  pass_criteria: Inputs state that missing user_criteria makes CRITERIA BLOCKED.
+- id: stale-after-content-change
+  target: knowledge/schemas.md
+  type: static
+  input: "A validated artifact is edited without a version bump."
+  expected_behavior: Prior gate results become STALE.
+  pass_criteria: Content State says any content change yields a new hash and makes results STALE.
+- id: autofix-limited-to-mechanical-classes
+  target: capabilities/review-refactor.md
+  type: static
+  input: "Validation reports a behavioral wording problem and a broken relative path."
+  expected_behavior: Only the broken path is autofixed; the behavioral problem escalates.
+  pass_criteria: Rules limit autofix to the classes in schemas.md Policy Defaults and escalate everything else.
+- id: release-needs-confirmation-and-predicate
+  target: capabilities/manage-version.md
+  type: static
+  input: "Release a package with one STALE gate."
+  expected_behavior: Release is blocked until the gate is rerun and CONFIRM_RELEASE is recorded.
+  pass_criteria: RELEASE_READINESS fails on STALE results and RELEASE requires a recorded confirmation.
+- id: golden-example-conforms
+  target: examples/meeting-summary-skill.md
+  type: static
+  input: "Run scripts/validate.py --file on the golden example."
+  expected_behavior: PARSE, SCHEMA, and CONTRACT pass with no findings.
+  pass_criteria: validate.py exits 0 for the file.
